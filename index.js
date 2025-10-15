@@ -1,31 +1,44 @@
 import express from "express";
+import cors from "cors";
 import fetch from "node-fetch";
 
 const app = express();
-const PORT = process.env.PORT || 8080; // Railway requires process.env.PORT
+app.use(cors());
 
-// Root endpoint to test the server
 app.get("/", (req, res) => {
-  res.send("✅ eBay Sneaker Bot Endpoint is Live!");
+  res.send("Endpoint is live!");
 });
 
-// Scrape endpoint
 app.get("/scrape", async (req, res) => {
   const { url } = req.query;
-  if (!url) return res.status(400).send("Missing ?url parameter");
+
+  if (!url) {
+    return res.status(400).send("Missing URL");
+  }
 
   try {
+    // Fetch eBay page HTML
     const response = await fetch(url);
     const html = await response.text();
-    res.send(html);
-  } catch (error) {
-    res.status(500).send("Error fetching URL: " + error.message);
+
+    // Extract title text
+    const match = html.match(/<title>(.*?)<\/title>/i);
+    if (!match) return res.status(404).send("Name not found");
+
+    let sneakerName = match[1]
+      .replace(/for sale online \| eBay/i, "")
+      .replace(/eBay/i, "")
+      .trim();
+
+    res.send(sneakerName);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error fetching name");
   }
 });
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+const port = process.env.PORT || 8080;
+app.listen(port, () => console.log(`✅ Server running on port ${port}`));
+
 
 
