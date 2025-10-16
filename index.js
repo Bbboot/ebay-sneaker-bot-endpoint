@@ -1,44 +1,24 @@
 import express from "express";
-import cors from "cors";
-import fetch from "node-fetch";
-
 const app = express();
-app.use(cors());
+app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.send("Endpoint is live!");
+// Verification token you choose
+const VERIFICATION_TOKEN = "mySuperSecretToken123";
+
+app.post("/marketplace-account-deletion", (req, res) => {
+  // Check verification token from eBay
+  const token = req.query.token || req.headers["x-ebay-verification-token"];
+  if (token !== VERIFICATION_TOKEN) return res.status(403).send("Forbidden");
+
+  // eBay may send a challenge parameter to verify
+  if (req.query.challenge) return res.send(req.query.challenge);
+
+  console.log("Account deletion event received:", req.body);
+  res.status(200).send("OK");
 });
 
-app.get("/scrape", async (req, res) => {
-  const { url } = req.query;
-
-  if (!url) {
-    return res.status(400).send("Missing URL");
-  }
-
-  try {
-    // Fetch eBay page HTML
-    const response = await fetch(url);
-    const html = await response.text();
-
-    // Extract title text
-    const match = html.match(/<title>(.*?)<\/title>/i);
-    if (!match) return res.status(404).send("Name not found");
-
-    let sneakerName = match[1]
-      .replace(/for sale online \| eBay/i, "")
-      .replace(/eBay/i, "")
-      .trim();
-
-    res.send(sneakerName);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error fetching name");
-  }
-});
-
-const port = process.env.PORT || 8080;
-app.listen(port, () => console.log(`✅ Server running on port ${port}`));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 
 
