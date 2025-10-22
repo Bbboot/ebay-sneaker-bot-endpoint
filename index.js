@@ -1,17 +1,36 @@
 import express from "express";
+import cors from "cors";
+import puppeteer from "puppeteer";
+
 const app = express();
-app.use(express.json());
+app.use(cors());
 
-// eBay deletion notifications will POST here
-app.post("/ebay-deletion", (req, res) => {
-  console.log("✅ Received eBay deletion notification:", req.body);
-  res.status(200).send("OK");
-});
-
-// Simple GET endpoint to test
 app.get("/", (req, res) => {
-  res.send("Endpoint is live!");
+  res.send("✅ Sneaker endpoint is live!");
 });
 
-const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`Server running on port ${port}`));
+app.get("/sneaker", async (req, res) => {
+  const url = req.query.url;
+  if (!url) {
+    return res.status(400).json({ error: "Missing ?url= parameter" });
+  }
+
+  try {
+    const browser = await puppeteer.launch({
+      headless: "new",
+      args: ["--no-sandbox", "--disable-setuid-sandbox"]
+    });
+    const page = await browser.newPage();
+    await page.goto(url, { waitUntil: "domcontentloaded" });
+
+    const title = await page.title();
+    await browser.close();
+
+    res.json({ status: "success", title });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
