@@ -1,15 +1,17 @@
 import express from "express";
 import cors from "cors";
-import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium-min";
 
 const app = express();
 app.use(cors());
 
+// Root route
 app.get("/", (req, res) => {
   res.send("✅ Sneaker endpoint is live!");
 });
 
+// Sneaker scraping route
 app.get("/sneaker", async (req, res) => {
   const url = req.query.url;
   if (!url) {
@@ -25,7 +27,7 @@ app.get("/sneaker", async (req, res) => {
     });
 
     const page = await browser.newPage();
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
+    await page.goto(url, { waitUntil: "domcontentloaded" });
 
     const title = await page.title();
     await browser.close();
