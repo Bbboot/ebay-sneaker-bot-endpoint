@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
 
 const app = express();
 app.use(cors());
@@ -11,17 +12,18 @@ app.get("/", (req, res) => {
 
 app.get("/sneaker", async (req, res) => {
   const url = req.query.url;
-  if (!url) {
-    return res.status(400).json({ error: "Missing ?url= parameter" });
-  }
+  if (!url) return res.status(400).json({ error: "Missing ?url= parameter" });
 
   try {
     const browser = await puppeteer.launch({
-      headless: "new",
-      args: ["--no-sandbox", "--disable-setuid-sandbox"]
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
     });
+
     const page = await browser.newPage();
-    await page.goto(url, { waitUntil: "domcontentloaded" });
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
 
     const title = await page.title();
     await browser.close();
