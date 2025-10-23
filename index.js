@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
-import puppeteer from "puppeteer-core";
 import chromium from "@sparticuz/chromium";
+import puppeteer from "puppeteer-core";
 
 const app = express();
 app.use(cors());
@@ -12,7 +12,9 @@ app.get("/", (req, res) => {
 
 app.get("/sneaker", async (req, res) => {
   const url = req.query.url;
-  if (!url) return res.status(400).json({ error: "Missing ?url= parameter" });
+  if (!url) {
+    return res.status(400).json({ error: "Missing ?url= parameter" });
+  }
 
   try {
     const browser = await puppeteer.launch({
